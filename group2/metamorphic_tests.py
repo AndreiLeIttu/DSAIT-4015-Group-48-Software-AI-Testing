@@ -31,47 +31,27 @@ def metamorphic_test(
         "passed": passed,
     }
 
-def flip_gender(X):
+def neutralize_opm_judgements(X):
     X_new = X.copy()
-    X_new["persoon_geslacht_vrouw"] = 1 - X_new["persoon_geslacht_vrouw"]
+
+    opm_cols = [
+        "persoonlijke_eigenschappen_flexibiliteit_opm",
+        "persoonlijke_eigenschappen_doorzettingsvermogen_opm",
+        "persoonlijke_eigenschappen_motivatie_opm",
+        "persoonlijke_eigenschappen_houding_opm",
+        "persoonlijke_eigenschappen_uiterlijke_verzorging_opm",
+    ]
+
+    for col in opm_cols:
+        if col in X_new.columns:
+            X_new[col] = X[col].median()
+
     return X_new
 
-
-def increase_days_at_address(X, days=365):
+def normalize_documentation_intensity(X):
     X_new = X.copy()
-    X_new["adres_dagen_op_adres"] += days
-    return X_new
 
+    if "afspraak_aantal_woorden" in X_new.columns:
+        X_new["afspraak_aantal_woorden"] = X["afspraak_aantal_woorden"].median()
 
-def flip_partner_status(X):
-    X_new = X.copy()
-    col = "relatie_partner_huidige_partner___partner__gehuwd_"
-    X_new[col] = 1 - X_new[col]
-    return X_new
-
-
-def flip_has_children(X):
-    X_new = X.copy()
-    X_new["relatie_kind_heeft_kinderen"] = 1 - X_new["relatie_kind_heeft_kinderen"]
-    return X_new
-
-def flip_flexibility_opm(X):
-    X_new = X.copy()
-    X_new["persoonlijke_eigenschappen_flexibiliteit_opm"] = (
-        1 - X_new["persoonlijke_eigenschappen_flexibiliteit_opm"]
-    )
-    return X_new
-
-
-def flip_doorzettingsvermogen_opm(X):
-    X_new = X.copy()
-    X_new["persoonlijke_eigenschappen_doorzettingsvermogen_opm"] = (
-        1 - X_new["persoonlijke_eigenschappen_doorzettingsvermogen_opm"]
-    )
-    return X_new
-
-
-def increase_appointment_words(X, n_words=50):
-    X_new = X.copy()
-    X_new["afspraak_aantal_woorden"] += n_words
     return X_new
