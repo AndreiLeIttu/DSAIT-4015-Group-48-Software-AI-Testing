@@ -47,30 +47,34 @@ X_test.drop(columns=["checked"], errors="ignore", inplace=True)
 
 
 # 3. DEFINE FEATURE GROUPS
-toxic_features = [
-    "persoonlijke_eigenschappen_flexibiliteit_opm",
-    "persoonlijke_eigenschappen_doorzettingsvermogen_opm",
-    "persoonlijke_eigenschappen_motivatie_opm",
-    "persoonlijke_eigenschappen_houding_opm",
-    "persoonlijke_eigenschappen_uiterlijke_verzorging_opm",
-    "afspraak_aantal_woorden",
-]
-safe_core = [
-    "adres_dagen_op_adres",
-    "pla_ondertekeningen_historie",
-    "deelname_act_actueel_projecten_uniek",
-    "instrument_ladder_historie_activering",
-    "afspraak_resultaat_ingevuld_uniek",
-    "afspraak_laatstejaar_resultaat_ingevuld_uniek",
-    "afspraak_afgelopen_jaar_afsprakenplan",
-    "ontheffing_hist_ind",
-    "pla_hist_pla_categorie_doelstelling_16",
-]
+toxic_features = {
+    "persoonlijke_eigenschappen_flexibiliteit_opm": "flexibility_consultant_judgement",
+    "persoonlijke_eigenschappen_doorzettingsvermogen_opm": "perseverance_consultant_judgement",
+    "persoonlijke_eigenschappen_motivatie_opm": "motivation_consultant_judgement",
+    "persoonlijke_eigenschappen_houding_opm": "attitude_consultant_judgement",
+    "persoonlijke_eigenschappen_uiterlijke_verzorging_opm": "appearance_care_consultant_judgement",
+    "afspraak_aantal_woorden": "appointment_number_words",
+    "persoon_leeftijd_bij_onderzoek": "age"
+}
+
+
+safe_core = {
+    "adres_dagen_op_adres": "days_at_address",
+    "pla_ondertekeningen_historie": "pla_signatures_history",
+    "deelname_act_actueel_projecten_uniek": "participation_act_current_projects_unique",
+    "instrument_ladder_historie_activering": "instrument_ladder_history_activation",
+    "afspraak_resultaat_ingevuld_uniek": "appointment_result_filled_unique",
+    "afspraak_laatstejaar_resultaat_ingevuld_uniek": "appointment_latest_year_result_filled_unique",
+    "afspraak_afgelopen_jaar_afsprakenplan": "number_of_appointments_last_year",
+    "ontheffing_hist_ind": "exemptions_number",
+    "pla_hist_pla_categorie_doelstelling_16": "actions_for_objective_16",
+    "belemmering_dagen_financiele_problemen": "obstacle_days_financial_problems",
+}
 
 
 # 4. MAP FEATURES TO COLUMN INDICES
-bad_indices = [ALL_COLUMNS.index(c) for c in (safe_core + toxic_features)]
-good_indices = [ALL_COLUMNS.index(c) for c in safe_core]
+bad_indices = [ALL_COLUMNS.index(c) for c in (list(safe_core.keys()) + list(toxic_features.keys()))]
+good_indices = [ALL_COLUMNS.index(c) for c in safe_core.keys()]
 
 
 # 5. BUILD PIPELINES
@@ -80,7 +84,7 @@ bad_pipeline = Pipeline([
         remainder="drop"
     )),
     ("classifier", GradientBoostingClassifier(
-        n_estimators=150,
+        n_estimators=100,
         max_depth=4,
         random_state=42
     ))
@@ -137,5 +141,5 @@ random.shuffle(models)
 
 (model_1_label, model_1_pipeline), (model_2_label, model_2_pipeline) = models
 
-export_to_onnx(model_1_pipeline, "model_1.onnx")
-export_to_onnx(model_2_pipeline, "model_2.onnx")
+export_to_onnx(model_1_pipeline, f"{model_1_label}-model.onnx")
+export_to_onnx(model_2_pipeline, f"{model_2_label}-model.onnx")
