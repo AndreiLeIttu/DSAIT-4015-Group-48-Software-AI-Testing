@@ -235,7 +235,7 @@ class TesterGroup1:
             
             # Small age change (1 year) should cause minimal change in risk
             modified = sample.copy()
-            modified['persoon_leeftijd_bij_onderzoek'] = 90 - modified['persoon_leeftijd_bij_onderzoek']
+            modified['persoon_leeftijd_bij_onderzoek'] = modified['persoon_leeftijd_bij_onderzoek'] + 1
             new_preds = self._get_predictions(modified)
             
             # Allow small changes but not dramatic ones (age can affect risk, but shouldn't be extreme)
