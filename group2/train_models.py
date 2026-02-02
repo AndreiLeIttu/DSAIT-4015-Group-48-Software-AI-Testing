@@ -1,4 +1,5 @@
 import random
+random.seed(42)
 import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
@@ -47,18 +48,15 @@ X_test.drop(columns=["checked"], errors="ignore", inplace=True)
 
 
 # 3. DEFINE FEATURE GROUPS
-toxic_features = {
+
+translations = {
     "persoonlijke_eigenschappen_flexibiliteit_opm": "flexibility_consultant_judgement",
     "persoonlijke_eigenschappen_doorzettingsvermogen_opm": "perseverance_consultant_judgement",
     "persoonlijke_eigenschappen_motivatie_opm": "motivation_consultant_judgement",
     "persoonlijke_eigenschappen_houding_opm": "attitude_consultant_judgement",
     "persoonlijke_eigenschappen_uiterlijke_verzorging_opm": "appearance_care_consultant_judgement",
     "afspraak_aantal_woorden": "appointment_number_words",
-    "persoon_leeftijd_bij_onderzoek": "age"
-}
-
-
-safe_core = {
+    "persoon_leeftijd_bij_onderzoek": "age",
     "adres_dagen_op_adres": "days_at_address",
     "pla_ondertekeningen_historie": "pla_signatures_history",
     "deelname_act_actueel_projecten_uniek": "participation_act_current_projects_unique",
@@ -69,12 +67,26 @@ safe_core = {
     "ontheffing_hist_ind": "exemptions_number",
     "pla_hist_pla_categorie_doelstelling_16": "actions_for_objective_16",
     "belemmering_dagen_financiele_problemen": "obstacle_days_financial_problems",
+
 }
+toxic_features = list(translations.keys())[:8]
+safe_core = list(translations.keys())[8:] + [
+    "contacten_soort_document__inkomend_",
+    "contacten_onderwerp_overleg_met_inkomen",
+    "contacten_onderwerp_no_show",
+    "competentie_vakdeskundigheid_toepassen",
+    "belemmering_dagen_financiele_problemen",
+    "belemmering_dagen_psychische_problemen",
+    "beschikbaarheid_aantal_historie_afwijkend_wegens_medische_omstandigheden",
+    "contacten_onderwerp_documenttype__overeenkomst_",
+    "contacten_soort_afgelopenjaar_document__uitgaand_",
+    "instrument_reden_beeindiging_historie_succesvol"
+]
 
 
 # 4. MAP FEATURES TO COLUMN INDICES
-bad_indices = [ALL_COLUMNS.index(c) for c in (list(safe_core.keys()) + list(toxic_features.keys()))]
-good_indices = [ALL_COLUMNS.index(c) for c in safe_core.keys()]
+bad_indices = [ALL_COLUMNS.index(c) for c in (safe_core + toxic_features)]
+good_indices = [ALL_COLUMNS.index(c) for c in safe_core]
 
 
 # 5. BUILD PIPELINES
@@ -136,10 +148,7 @@ models = [
     ("bad", bad_pipeline),
 ]
 
-random.seed(42)
-random.shuffle(models)
-
 (model_1_label, model_1_pipeline), (model_2_label, model_2_pipeline) = models
 
-export_to_onnx(model_1_pipeline, f"{model_1_label}-model.onnx")
-export_to_onnx(model_2_pipeline, f"{model_2_label}-model.onnx")
+export_to_onnx(model_1_pipeline, f"model_1.onnx")
+export_to_onnx(model_2_pipeline, f"model_2.onnx")

@@ -372,5 +372,5 @@ class TesterGroup1:
             # 2. Fill in the SHAP-selected features
             full_X[X_subset.columns] = X_subset
             full_X = self._prepare_data(full_X)
-            # 3. Forward to your existing model
+            # 3. Forward to existing model
             return self.model.predict(full_X)

@@ -55,3 +55,11 @@ def normalize_documentation_intensity(X):
         X_new["afspraak_aantal_woorden"] = X["afspraak_aantal_woorden"].median()
 
     return X_new
+
+def increase_age(X):
+    X_new = X.copy()
+
+    if "persoon_leeftijd_bij_onderzoek" in X_new.columns:
+        X_new["persoon_leeftijd_bij_onderzoek"]+=1
+    
+    return X_new

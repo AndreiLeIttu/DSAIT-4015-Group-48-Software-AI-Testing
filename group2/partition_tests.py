@@ -1,59 +1,66 @@
-def partition_test_binary(model, X, feature_name, max_abs_diff=0.02, max_rel_ratio=1.5):
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+
+partitions = {
+    "persoonlijke_eigenschappen_flexibiliteit_opm": [
+        {"name": "flexible", "condition": lambda df: df["persoonlijke_eigenschappen_flexibiliteit_opm"]==1},
+        {"name": "not flexible", "condition": lambda df: df["persoonlijke_eigenschappen_flexibiliteit_opm"]==0},
+    ],
+    "persoonlijke_eigenschappen_doorzettingsvermogen_opm": [
+        {"name": "persevering", "condition": lambda df: df["persoonlijke_eigenschappen_doorzettingsvermogen_opm"]==1},
+        {"name": "not persevering", "condition": lambda df: df["persoonlijke_eigenschappen_doorzettingsvermogen_opm"]==0},
+    ],
+    "persoonlijke_eigenschappen_motivatie_opm": [
+        {"name": "motivated", "condition": lambda df: df["persoonlijke_eigenschappen_motivatie_opm"]==1},
+        {"name": "not motivated", "condition": lambda df: df["persoonlijke_eigenschappen_motivatie_opm"]==0},
+    ],
+    "persoonlijke_eigenschappen_houding_opm": [
+        {"name": "good attitude", "condition": lambda df: df["persoonlijke_eigenschappen_houding_opm"]==1},
+        {"name": "bad attitude", "condition": lambda df: df["persoonlijke_eigenschappen_houding_opm"]==0},
+    ],
+    "persoonlijke_eigenschappen_uiterlijke_verzorging_opm": [
+        {"name": "good appearance and care", "condition": lambda df: df["persoonlijke_eigenschappen_uiterlijke_verzorging_opm"]==1},
+        {"name": "bad appearance and care", "condition": lambda df: df["persoonlijke_eigenschappen_uiterlijke_verzorging_opm"]==0},
+    ],
+    "persoon_leeftijd_bij_onderzoek": [
+        {"name": "young adult", "condition": lambda df: df["persoon_leeftijd_bij_onderzoek"]<=25},
+        {"name": "established adults", "condition": lambda df: df["persoon_leeftijd_bij_onderzoek"].between(26, 54)},
+        {"name": "pre-retirement", "condition": lambda df: df["persoon_leeftijd_bij_onderzoek"].between(55, 64)},
+        {"name": "elderly", "condition": lambda df: df["persoon_leeftijd_bij_onderzoek"]>=65}
+    ]
+}
+
+def partition_test_binary(model, X, y_test, feature_name):
     values = sorted(X[feature_name].dropna().unique())
     assert len(values) == 2, f"{feature_name} must be binary, got {values}"
 
-    group_a = X[X[feature_name] == values[0]]
-    group_b = X[X[feature_name] == values[1]]
+    for partition in partitions[feature_name]:
+        partition_data =  X[partition["condition"](X)]
+        partition_indices = partition_data.index
+        partition_labels = y_test.loc[partition_indices]
 
-    rate_a = model.predict(group_a).mean()
-    rate_b = model.predict(group_b).mean()
+        if not partition_data.empty:
+            predictions = model.predict(partition_data)
+            accuracy = accuracy_score(partition_labels, predictions)
 
-    abs_diff = abs(rate_a - rate_b)
-    ratio = max(rate_a, rate_b) / max(min(rate_a, rate_b), 1e-6)
+            print(f"[Partition] {feature_name} - {partition['name']}")
+            print(f"Number of data points in the test set: {len(partition_data)}")
+            print(f"Accuracy: {accuracy:.2f}")
+            print(f"Predictions: {np.unique(predictions, return_counts=True)}\n")
 
-    print(f"[Partition] {feature_name}")
-    print(f"  Group {values[0]} rate: {rate_a:.3f}")
-    print(f"  Group {values[1]} rate: {rate_b:.3f}")
-    print(f"  Absolute diff: {abs_diff:.3f}")
-    print(f"  Risk ratio: {ratio:.2f}")
+def partition_test_age(model, X, y_test):
+    feature_name = "persoon_leeftijd_bij_onderzoek"
+    for partition in partitions[feature_name]:
+        partition_data =  X[partition["condition"](X)]
+        partition_indices = partition_data.index
+        partition_labels = y_test.loc[partition_indices]
 
-    passed = (abs_diff <= max_abs_diff) and (ratio <= max_rel_ratio)
+        if not partition_data.empty:
+            predictions = model.predict(partition_data)
+            accuracy = accuracy_score(partition_labels, predictions)
 
-    print("  RESULT:", "PASS" if passed else "FAIL")
-
-    return {
-        "feature": feature_name,
-        "abs_diff": abs_diff,
-        "ratio": ratio,
-        "passed": passed,
-    }
-
-
-def partition_test_numeric(model, X, feature_name, max_abs_diff=0.02, max_rel_ratio=1.5):
-    median = X[feature_name].median()
-
-    low = X[X[feature_name] <= median]
-    high = X[X[feature_name] > median]
-
-    rate_low = model.predict(low).mean()
-    rate_high = model.predict(high).mean()
-
-    abs_diff = abs(rate_low - rate_high)
-    ratio = max(rate_low, rate_high) / max(min(rate_low, rate_high), 1e-6)
-
-    print(f"[Partition] {feature_name}")
-    print(f"  Low (≤ median) rate:  {rate_low:.3f}")
-    print(f"  High (> median) rate: {rate_high:.3f}")
-    print(f"  Absolute diff: {abs_diff:.3f}")
-    print(f"  Risk ratio: {ratio:.2f}")
-
-    passed = (abs_diff <= max_abs_diff) and (ratio <= max_rel_ratio)
-
-    print("  RESULT:", "PASS" if passed else "FAIL")
-
-    return {
-        "feature": feature_name,
-        "abs_diff": abs_diff,
-        "ratio": ratio,
-        "passed": passed,
-    }
+            print(f"[Partition] {feature_name} - {partition['name']}")
+            print(f"Number of data points in the test set: {len(partition_data)}")
+            print(f"Accuracy: {accuracy:.2f}")
+            print(f"Predictions: {np.unique(predictions, return_counts=True)}\n")
